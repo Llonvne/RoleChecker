@@ -81,8 +81,8 @@ class AsRoleResolver(
     ): CodeBlock.Builder {
         findPassAnnotatedFunction(cls)
             .forEach {
-                nextControlFlow(
-                    "else if (role is %N && %N.%N(%N.%N))",
+                beginControlFlow(
+                    "if (role is %N && %N.%N(%N.%N))",
                     it.type.toClassName().simpleName + "RoleImpl",
                     instanceName,
                     it.functionName,
@@ -100,6 +100,7 @@ class AsRoleResolver(
                     )
                 }
                 addStatement("return true")
+                endControlFlow()
             }
         return this
     }
@@ -112,13 +113,21 @@ class AsRoleResolver(
 
         val toType = annotation.arguments.first().value as KSType
 
-        nextControlFlow(
-            "else if(check(id,%N(%N.%N(),id)){pass(role)})",
-            toType.declaration.simpleName.asString() + "RoleImpl",
-            instanceName,
+        addStatement(
+            "val to = %N.%N()", instanceName,
             func.simpleName.asString()
         )
-        addStatement("return true")
+
+        beginControlFlow("if (to != null)")
+
+        beginControlFlow(
+            "if(check(id,%N(to,id)){pass(role)})",
+            toType.declaration.simpleName.asString() + "RoleImpl",
+        ).addStatement("return true")
+            .endControlFlow()
+
+
+        endControlFlow()
         return this
     }
 
@@ -190,11 +199,10 @@ class AsRoleResolver(
                                 )
                             }
                             .addStatement("return %N == %N.%N", instanceName, "role", instanceName)
+                            .endControlFlow()
                             .resolvePassTypes(cls, instanceName, asRole)
                             .resolveTo(instanceName, cls)
-                            .nextControlFlow("else")
                             .addStatement("return false")
-                            .endControlFlow()
                             .build()
 
                     )

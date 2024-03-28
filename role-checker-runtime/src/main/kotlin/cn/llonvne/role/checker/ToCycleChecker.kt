@@ -4,7 +4,11 @@ import java.util.UUID
 import kotlin.reflect.KClass
 
 
-inline fun <reified T : Any> check(id: UUID, thisRole: T, invoker: T.() -> Boolean): Boolean {
+inline fun <reified T> check(id: UUID, thisRole: T, invoker: T.() -> Boolean): Boolean {
+    println(thisRole)
+    if (thisRole == null) {
+        return false
+    }
 
     if (CheckContext.isCycle(id, T::class)) {
         throw CycleToException()
