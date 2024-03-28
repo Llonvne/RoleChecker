@@ -143,7 +143,7 @@ class AsRoleResolver(
         val idName = "id"
 
         val typeSpec = TypeSpec.classBuilder(implClsName)
-            .addModifiers(KModifier.DATA)
+            .addModifiers(KModifier.DATA, KModifier.INTERNAL)
             .addProperty(
                 PropertySpec.builder(instanceName, clsClassName)
                     .initializer(instanceName)
@@ -222,7 +222,7 @@ class AsRoleResolver(
 
         val fromFunSpec = FunSpec.builder("from")
             .receiver(RoleConstructor::class)
-            .addParameter(ParameterSpec(instanceName,cls.toClassName()))
+            .addParameter(ParameterSpec(instanceName, cls.toClassName()))
             .returns(RoleCheckerConfigure.SEAL_ROLE_CLASS_NAME)
             .addCode("return %N(%N)", implClsName, instanceName)
             .build()

@@ -45,6 +45,15 @@ root.pass(aRole)
 
 在默认情况下只有两者内部类型一致，且属性一致(使用 DataClass Equals 进行比较)才返回 true,否则返回 false
 
+#### 请不要使用 == 直接判断权限是否相等,除非你知道你在做什么
+```kotlin
+// false
+println(RoleConstructor.createRoot() == RoleConstructor.createRoot())
+
+// true
+println(RoleConstructor.createRoot().pass(RoleConstructor.createRoot()))
+```
+
 4. 权限链
 
 你可以使用以下注解来构建权限链
