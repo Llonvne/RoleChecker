@@ -85,4 +85,80 @@ data class Root(val placeHolder: Unit) {
 }
 ```
 
+## 使用例子
+
+1. 最简单的模型
+
+```kotlin
+@AsRole
+data class TeamOwner(val teamId: Int = 1)
+
+@AsRole
+data class TeamMember(val teamId: Int)
+
+@AsRole
+data class TeamBaned(val teamId: Int)
+
+
+fun main() {
+    // false
+    listOf(
+        RoleConstructor.from(TeamMember(1)),
+        RoleConstructor.from(TeamMember(2)),
+        RoleConstructor.from(TeamOwner(3)),
+        RoleConstructor.from(TeamBaned(4)),
+    ).pass(RoleConstructor.createTeamBaned(5))
+    
+}
+```
+
+如上是一个最简单的权限模型，模拟了一个用户拥有的多种权限，并通过预定义的 pass 方法测试。
+
+2. 通配符类型
+
+我们尝试增加一个 TeamSuper 权限使其对于所有的 TeamOwner 验证都为 true,代码如下
+```kotlin
+@AsRole
+data class TeamSuper(val placeHolder: Unit) {
+    @Pass(TeamOwner::class)
+    fun owner(teamOwner: TeamOwner): Boolean {
+        return true
+    }
+}
+```
+使用 Pass 注解，当 Required 为 TeamOwner 时直接验证为 True
+```kotlin
+listOf(
+    RoleConstructor.from(TeamMember(1)),
+    RoleConstructor.from(TeamMember(2)),
+    RoleConstructor.from(TeamOwner(3)),
+    RoleConstructor.from(TeamBaned(4)),
+    RoleConstructor.createTeamSuper()
+).pass(RoleConstructor.createTeamOwner(10))
+```
+
+3. 权限链
+
+我们希望添加一个 Root 权限，使其能够拥有 TeamSuper 的一切权限，代码如下
+```kotlin
+@AsRole
+data class Root(val placeHolder: Unit) {
+    @To(TeamSuper::class)
+    fun teamSuper(): TeamSuper {
+        return TeamSuper(Unit)
+    }
+}
+```
+我们可以再次进行验证
+```kotlin
+// true
+listOf(
+    RoleConstructor.from(TeamMember(1)),
+    RoleConstructor.from(TeamMember(2)),
+    RoleConstructor.from(TeamOwner(3)),
+    RoleConstructor.from(TeamBaned(4)),
+    RoleConstructor.createRoot()
+).pass(RoleConstructor.createTeamOwner(10))
+```
+
 

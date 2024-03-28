@@ -220,6 +220,13 @@ class AsRoleResolver(
 
         functionFileSpec.addImport(cls.packageName.asString(), clsShortname)
 
+        val fromFunSpec = FunSpec.builder("from")
+            .receiver(RoleConstructor::class)
+            .addParameter(ParameterSpec(instanceName,cls.toClassName()))
+            .returns(RoleCheckerConfigure.SEAL_ROLE_CLASS_NAME)
+            .addCode("return %N(%N)", implClsName, instanceName)
+            .build()
+
         val funSpec = FunSpec.builder(functionName)
             .receiver(RoleConstructor::class)
             .addComment("""Data Class ${cls.qualifiedName?.getShortName()} to Role Constructor""")
@@ -251,6 +258,7 @@ class AsRoleResolver(
             .addCode("return %N(%N)", implClsName, instanceName)
             .build()
         functionFileSpec.addFunction(funSpec)
+        functionFileSpec.addFunction(fromFunSpec)
     }
 
 
