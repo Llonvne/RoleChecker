@@ -20,7 +20,7 @@ inline fun <reified T> check(id: UUID, thisRole: T, invoker: T.() -> Boolean): B
         CheckContext.clean(id)
     }
 
-    return thisRole.invoker()
+    return ret
 }
 
 object CheckContext {

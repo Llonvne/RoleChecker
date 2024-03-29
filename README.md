@@ -46,6 +46,7 @@ root.pass(aRole)
 在默认情况下只有两者内部类型一致，且属性一致(使用 DataClass Equals 进行比较)才返回 true,否则返回 false
 
 #### 请不要使用 == 直接判断权限是否相等,除非你知道你在做什么
+
 ```kotlin
 // false
 println(RoleConstructor.createRoot() == RoleConstructor.createRoot())
@@ -94,6 +95,65 @@ data class Root(val placeHolder: Unit) {
 }
 ```
 
+* UnconditionalPass
+
+Pass 注解的特例等价与在 Pass 函数内部直接返回 True
+
+```kotlin
+@AsRole
+@UnconditionalPass(InviteMember::class)
+data class TeamManager(
+    val teamId: Int
+)
+```
+
+* PassKey - 目标为权限模型
+
+使用注解的方式定义方式
+
+```kotlin
+@PassKey("teamId", "teamId", DeleteTeam::class)
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.SOURCE)
+annotation class AllowDeleteMember
+```
+
+该注解定义了只需要 TeamId 相同既 Pass
+
+PassKey 目前不可定义多个条件
+
+* TypelessPasskey - 目标为 Pass 函数
+
+预定义 Pass 验证
+
+```kotlin
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.SOURCE)
+@TypelessPassKey("teamId", "teamId")
+annotation class RequireSameTeam
+```
+
+如上验证要求权限必须具有 teamId 属性，且必须相同
+
+使用如下
+
+```kotlin
+@AsRole
+data class TeamMember(
+    val teamId: Int
+) {
+    @RequireSameTeam
+    @Pass(InviteMember::class)
+    fun invite(inviteMember: InviteMember): Boolean {
+        return inviteMember.groupInviteType == GroupInviteType.Open
+    }
+}
+```
+
+此时验证 invite 函数前会预先验证 PassId
+
+TypelessPassKey 可以定义多个条件验证
+
 ## 使用例子
 
 1. 最简单的模型
@@ -117,7 +177,7 @@ fun main() {
         RoleConstructor.from(TeamOwner(3)),
         RoleConstructor.from(TeamBaned(4)),
     ).pass(RoleConstructor.createTeamBaned(5))
-    
+
 }
 ```
 
@@ -126,6 +186,7 @@ fun main() {
 2. 通配符类型
 
 我们尝试增加一个 TeamSuper 权限使其对于所有的 TeamOwner 验证都为 true,代码如下
+
 ```kotlin
 @AsRole
 data class TeamSuper(val placeHolder: Unit) {
@@ -135,7 +196,9 @@ data class TeamSuper(val placeHolder: Unit) {
     }
 }
 ```
+
 使用 Pass 注解，当 Required 为 TeamOwner 时直接验证为 True
+
 ```kotlin
 listOf(
     RoleConstructor.from(TeamMember(1)),
@@ -149,6 +212,7 @@ listOf(
 3. 权限链
 
 我们希望添加一个 Root 权限，使其能够拥有 TeamSuper 的一切权限，代码如下
+
 ```kotlin
 @AsRole
 data class Root(val placeHolder: Unit) {
@@ -158,7 +222,9 @@ data class Root(val placeHolder: Unit) {
     }
 }
 ```
+
 我们可以再次进行验证
+
 ```kotlin
 // true
 listOf(
